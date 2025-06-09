@@ -1,0 +1,49 @@
+colnames(data)
+library(ggplot2)
+# Filtrar las columnas de rh
+rh_data <- data%>%
+  select(TIMESTAMP, RECORD, RH_nivel1_Avg, RH_nivel2_Avg, RH_nivel3_Avg, RH_nivel4_Avg)
+
+# Verificar las primeras filas de las columnas seleccionadas
+head(rh_data)
+
+# Crear gráfico de rh en el tiempo para cada nivel
+ggplot(rh_data, aes(x = TIMESTAMP)) +
+  geom_line(aes(y = RH_nivel1_Avg, color = "RH_nivel1_Avg")) +
+  geom_line(aes(y = RH_nivel2_Avg, color = "RH_nivel2_Avg")) +
+  geom_line(aes(y = RH_nivel3_Avg, color = "RH_nivel3_Avg")) +
+  geom_line(aes(y = RH_nivel4_Avg, color = "RH_nivel4_Avg")) +
+  labs(title = "rh por niveles a lo largo del tiempo",
+       x = "Dias", y = "rh (%)") +
+  theme_minimal() +
+  scale_color_manual(values = c("RH_nivel1_Avg" = "blue", 
+  "RH_nivel2_Avg" = "green", "RH_nivel3_Avg" = "red", 
+  "RH_nivel4_Avg" = "purple"))
+
+# Calcular las temperaturas máximas y mínimas para cada nivel
+max_rh <- apply(rh_data[, 3:6], 2, max) 
+min_rh <- apply(rh_data[, 3:6], 2, min)  
+# Imprimir los resultados
+print(max_rh)
+print(min_rh)
+# Crear un dataframe para las máximas y mínimas
+rh_max_min <- data.frame(
+  rh = c(max_rh, min_rh),
+  Tipo = rep(c("Máxima", "Mínima"), each = length(max_rh)),
+  Niveles = rep(c("RH_nivel1_Avg", "RH_nivel2_Avg", "RH_nivel3_Avg",
+          "RH_nivel4_Avg"), 2)
+)
+rh_max_min
+rh_max_min <- rh_max_min %>%
+  group_by(Tipo) %>%
+  mutate(Porcentaje = round(rh, 2))  # O usa 0 si no quieres decimales
+# Crear gráfico de barras
+ggplot(rh_max_min, aes(x = Niveles, y = rh, fill = Tipo)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = paste0(Porcentaje, "%")),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5,
+            size = 3.5) +
+  labs(title = "rh máxima y mínima por nivel",
+       y = "rh (%)", x = "Niveles", fill = "Tipo") +
+  theme_minimal()
